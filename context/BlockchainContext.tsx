@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -55,14 +54,18 @@ interface BlockchainContextType {
   miningParams: MiningParams | null;
   nodeStatus: boolean;
   peers: string[];
+  currentPort: number;
+  setCurrentPort: (port: number) => void;
   refreshChain: () => Promise<void>;
   refreshVotes: () => Promise<void>;
+  fetchMiningParams: () => Promise<void>;
   submitVote: (voter: string, candidate: string) => Promise<boolean>;
   checkVoteStatus: (voter: string) => Promise<VoteStatus | null>;
   mine: () => Promise<Block | null>;
   addTransaction: (
     transaction: Omit<Transaction, "timestamp">
   ) => Promise<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   verifyBlock: (blockIndex?: number) => Promise<any>;
 }
 
@@ -81,12 +84,15 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
   const [miningParams, setMiningParams] = useState<MiningParams | null>(null);
   const [nodeStatus, setNodeStatus] = useState(false);
   const [peers, setPeers] = useState<string[]>([]);
+  const [currentPort, setCurrentPort] = useState(5001);
 
-  // Initialize and check connection
+  const baseURL = `/api${currentPort}`;
+  const trackerURL = `/tracker`;
+
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await api.get("/chain");
+        await api.get(`${baseURL}/chain`);
         setNodeStatus(true);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
@@ -95,12 +101,10 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
     };
 
     checkConnection();
-    const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
-
+    const interval = setInterval(checkConnection, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [baseURL]);
 
-  // Fetch initial data
   useEffect(() => {
     if (nodeStatus) {
       refreshChain();
@@ -108,13 +112,13 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
       fetchMiningParams();
       fetchPeers();
     }
-  }, [nodeStatus]);
+  }, [nodeStatus, baseURL]);
 
   const refreshChain = async () => {
     try {
-      const response = await api.get("/chain");
-      if (response.data.status === "success") {
-        setChain(response.data.data.chain);
+      const response = await api.get(`${baseURL}/chain`);
+      if (response.data.chain) {
+        setChain(response.data.chain);
       }
     } catch (error) {
       console.error("Error fetching blockchain:", error);
@@ -123,7 +127,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const refreshVotes = async () => {
     try {
-      const response = await api.get("/votes");
+      const response = await api.get(`${baseURL}/votes`);
       if (response.data.status === "success") {
         setVoteResults(response.data.data.results);
         setTotalVotes(response.data.data.total_votes);
@@ -135,9 +139,9 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const fetchMiningParams = async () => {
     try {
-      const response = await api.get("/mining_params");
-      if (response.data.status === "success") {
-        setMiningParams(response.data.data);
+      const response = await api.get(`${baseURL}/mining_params`);
+      if (response.data) {
+        setMiningParams(response.data);
       }
     } catch (error) {
       console.error("Error fetching mining parameters:", error);
@@ -146,9 +150,9 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const fetchPeers = async () => {
     try {
-      const response = await api.get("http://localhost:6000/peers");
+      const response = await api.get(`${trackerURL}/peers`);
       if (response.data.status === "success") {
-        setPeers(response.data.data.peers);
+        setPeers(response.data.peers);
       }
     } catch (error) {
       console.error("Error fetching peers:", error);
@@ -157,7 +161,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const submitVote = async (voter: string, candidate: string) => {
     try {
-      const response = await api.post("/vote", { voter, candidate });
+      const response = await api.post(`${baseURL}/vote`, { voter, candidate });
       if (response.data.status === "success") {
         toast.success(
           "Vote submitted successfully! Mining required to confirm."
@@ -174,7 +178,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const checkVoteStatus = async (voter: string) => {
     try {
-      const response = await api.get(`/vote_status?voter=${voter}`);
+      const response = await api.get(`${baseURL}/vote_status?voter=${voter}`);
       if (response.data.status === "success") {
         return response.data.data;
       }
@@ -187,12 +191,15 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const mine = async () => {
     try {
-      const response = await api.post("/mine");
+      const response = await api.post(`${baseURL}/mine`);
       if (response.data.status === "success") {
         toast.success("Block mined successfully!");
         refreshChain();
         refreshVotes();
-        return response.data.block;
+        const newBlock = response.data.block;
+
+        setPendingTransactions([]);
+        return newBlock;
       }
       return null;
     } catch (error) {
@@ -206,8 +213,9 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
     transaction: Omit<Transaction, "timestamp">
   ) => {
     try {
-      const response = await api.post("/transaction", transaction);
+      const response = await api.post(`${baseURL}/transaction`, transaction);
       if (response.data.status === "success") {
+        setPendingTransactions((prev) => [...prev, transaction]);
         toast.success("Transaction added to pending pool");
         return true;
       }
@@ -223,8 +231,8 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
     try {
       const url =
         blockIndex !== undefined
-          ? `/verify_block?block_index=${blockIndex}`
-          : "/verify_block";
+          ? `${baseURL}/verify_block?block_index=${blockIndex}`
+          : `${baseURL}/verify_block`;
       const response = await api.get(url);
       return response.data;
     } catch (error) {
@@ -243,6 +251,8 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         miningParams,
         nodeStatus,
         peers,
+        currentPort,
+        setCurrentPort,
         refreshChain,
         refreshVotes,
         submitVote,
@@ -250,6 +260,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         mine,
         addTransaction,
         verifyBlock,
+        fetchMiningParams,
       }}
     >
       {children}

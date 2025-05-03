@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Database, Vote, BarChart3, Settings } from "lucide-react";
+import { Database, Vote, BarChart3, Settings, Send } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "@/components/ui/button";
 import { useBlockchain } from "@/context/BlockchainContext";
@@ -26,6 +26,11 @@ export default function Navbar() {
       path: "/explorer",
       label: "Explorer",
       icon: <BarChart3 className="h-4 w-4 mr-2" />,
+    },
+    {
+      path: "/transactions",
+      label: "Transactions",
+      icon: <Send className="h-4 w-4 mr-2" />,
     },
     {
       path: "/settings",

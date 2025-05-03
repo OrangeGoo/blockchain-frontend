@@ -15,8 +15,16 @@ import { Database, Server, Network, Clock, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
-  const { chain, miningParams, nodeStatus, peers, refreshChain, mine } =
-    useBlockchain();
+  const {
+    chain,
+    miningParams,
+    nodeStatus,
+    peers,
+    refreshChain,
+    fetchMiningParams,
+    mine,
+    currentPort,
+  } = useBlockchain();
 
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -28,11 +36,12 @@ export default function Dashboard() {
     }, 10000); // Refresh every 10 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentPort]);
 
   const refreshData = async () => {
     setIsRefreshing(true);
     await refreshChain();
+    await fetchMiningParams();
     setLastRefreshed(new Date());
     setIsRefreshing(false);
   };
@@ -47,8 +56,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

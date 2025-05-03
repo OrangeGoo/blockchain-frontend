@@ -15,12 +15,11 @@ import { Label } from "@/components/ui/label";
 import { useBlockchain } from "@/context/BlockchainContext";
 import { Server, Sliders } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { api, setApiBaseUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function NodeSettings() {
-  const { miningParams, peers } = useBlockchain();
+  const { miningParams, peers, currentPort, setCurrentPort } = useBlockchain();
 
-  const [currentNode, setCurrentNode] = useState(api.defaults.baseURL || "");
   const [newNodeUrl, setNewNodeUrl] = useState("");
   const [updatedMiningParams, setUpdatedMiningParams] = useState({
     difficulty: 0,
@@ -41,23 +40,36 @@ export default function NodeSettings() {
     }
   }, [miningParams]);
 
-  const handleSwitchNode = () => {
+  useEffect(() => {
+    const savedPort = localStorage.getItem("currentPort");
+    if (savedPort) {
+      setCurrentPort(Number(savedPort));
+    }
+  }, []);
+
+  const handleSwitchNode = (port: number) => {
+    localStorage.setItem("currentPort", port.toString());
+    setCurrentPort(port);
+    toast.success(`Switched to node port: ${port}`);
+    window.location.reload();
+  };
+
+  const handleUrlSubmit = () => {
     if (!newNodeUrl) {
       toast.error("Please enter a valid node URL");
       return;
     }
 
     try {
-      // Validate URL format
-      new URL(newNodeUrl);
+      const url = new URL(newNodeUrl);
+      const port = Number(url.port);
 
-      setApiBaseUrl(newNodeUrl);
-      setCurrentNode(newNodeUrl);
-      toast.success(`Switched to node: ${newNodeUrl}`);
-      setNewNodeUrl("");
+      if (!port) {
+        toast.error("Invalid or missing port in URL");
+        return;
+      }
 
-      // Reload the page to refresh all data
-      window.location.reload();
+      handleSwitchNode(port);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error("Invalid URL format");
@@ -102,14 +114,14 @@ export default function NodeSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Current Node</Label>
+              <Label>Current Node Port</Label>
               <div className="flex items-center rounded-md border px-3 py-2 text-sm">
-                {currentNode}
+                {currentPort}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="new-node">Switch Node</Label>
+              <Label htmlFor="new-node">Switch Node (Enter URL)</Label>
               <div className="flex space-x-2">
                 <Input
                   id="new-node"
@@ -117,30 +129,31 @@ export default function NodeSettings() {
                   value={newNodeUrl}
                   onChange={(e) => setNewNodeUrl(e.target.value)}
                 />
-                <Button onClick={handleSwitchNode}>Switch</Button>
+                <Button onClick={handleUrlSubmit}>Switch</Button>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Available Nodes</Label>
               <div className="rounded-md border divide-y">
-                {peers.map((peer, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3"
-                  >
-                    <span className="text-sm">{peer}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setNewNodeUrl(peer);
-                      }}
+                {peers.map((peer, index) => {
+                  const port = Number(peer.split(":").pop());
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3"
                     >
-                      Select
-                    </Button>
-                  </div>
-                ))}
+                      <span className="text-sm">{peer}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSwitchNode(port)}
+                      >
+                        Select
+                      </Button>
+                    </div>
+                  );
+                })}
                 {peers.length === 0 && (
                   <div className="p-3 text-center text-sm text-muted-foreground">
                     No peers available

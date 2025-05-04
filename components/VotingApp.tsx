@@ -42,6 +42,8 @@ export default function VotingApp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMining, setIsMining] = useState(false);
   const [error, setError] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [transactionCreated, setTransactionCreated] = useState(false);
 
   useEffect(() => {
     // Refresh votes every 5 seconds
@@ -76,16 +78,25 @@ export default function VotingApp() {
 
     setError("");
     setIsSubmitting(true);
+    setTransactionCreated(false);
 
-    const success = await submitVote(voterId, selectedCandidate);
+    try {
+      // Submit the vote to the voting system
+      // This will automatically add a transaction to our pendingTransactions state
+      const success = await submitVote(voterId, selectedCandidate);
 
-    if (success) {
-      // Check vote status after submission
-      const status = await checkVoteStatus(voterId);
-      setVoteStatus(status);
+      if (success) {
+        // Check vote status after submission
+        const status = await checkVoteStatus(voterId);
+        setVoteStatus(status);
+        setTransactionCreated(true);
+      }
+    } catch (err) {
+      console.error("Error during voting process:", err);
+      setError("An error occurred during the voting process");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const handleMine = async () => {
@@ -165,11 +176,6 @@ export default function VotingApp() {
                       </>
                     )}
                   </div>
-                  <AlertDescription>
-                    {voteStatus.has_voted
-                      ? `You voted for ${voteStatus.voted_candidate} in block #${voteStatus.block_height}`
-                      : "Please select a candidate and submit your vote"}
-                  </AlertDescription>
                 </Alert>
               )}
 

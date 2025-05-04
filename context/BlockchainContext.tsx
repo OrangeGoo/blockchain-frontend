@@ -24,6 +24,7 @@ interface Transaction {
   sender: string;
   recipient: string;
   amount: number;
+  isVote?: boolean;
 }
 
 interface VoteResult {
@@ -182,6 +183,19 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         toast.success(
           "Vote submitted successfully! Mining required to confirm."
         );
+
+        // Add a representation of this vote to the pending transactions
+        // with a client-side flag to identify it as a vote
+        setPendingTransactions((prev) => [
+          ...prev,
+          {
+            sender: voter,
+            recipient: candidate,
+            amount: 1,
+            isVote: true,
+          },
+        ]);
+
         return true;
       }
       return false;

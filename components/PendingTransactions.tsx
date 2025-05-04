@@ -1,6 +1,4 @@
 "use client";
-
-import { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,16 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useBlockchain } from "@/context/BlockchainContext";
-import { Clock, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Clock, Vote } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function PendingTransactions() {
-  const { pendingTransactions, refreshChain } = useBlockchain();
-
-  useEffect(() => {
-    // Fetch pending transactions on mount
-    refreshChain();
-  }, [refreshChain]);
+  const { pendingTransactions } = useBlockchain();
 
   return (
     <Card>
@@ -32,16 +25,21 @@ export default function PendingTransactions() {
             Transactions waiting to be mined into a block
           </CardDescription>
         </div>
-        <Button variant="outline" size="icon" onClick={refreshChain}>
-          <RefreshCw className="h-4 w-4" />
-          <span className="sr-only">Refresh</span>
-        </Button>
       </CardHeader>
       <CardContent>
         {pendingTransactions.length > 0 ? (
           <div className="space-y-4">
             {pendingTransactions.map((tx, index) => (
               <div key={index} className="rounded-md border p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="font-medium">Transaction #{index + 1}</div>
+                  {tx.isVote && (
+                    <Badge className="bg-blue-500">
+                      <Vote className="h-3 w-3 mr-1" />
+                      Vote
+                    </Badge>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div>
                     <span className="font-medium">From:</span>
@@ -62,6 +60,7 @@ export default function PendingTransactions() {
                 </div>
                 <div className="mt-2">
                   <span className="font-medium">Amount:</span> {tx.amount}
+                  {tx.isVote && " (vote)"}
                 </div>
               </div>
             ))}

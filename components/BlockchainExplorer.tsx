@@ -20,6 +20,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,12 +31,19 @@ import {
 } from "@/components/ui/accordion";
 
 export default function BlockchainExplorer() {
-  const { chain, verifyBlock } = useBlockchain();
+  const { chain, verifyBlock, verifyTransaction } = useBlockchain();
 
   const [searchTerm, setSearchTerm] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedBlock, setSelectedBlock] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [txVerificationResults, setTxVerificationResults] = useState<
+    Record<number, any>
+  >({});
+  const [verifyingTx, setVerifyingTx] = useState<number | null>(null);
 
   const handleSearch = () => {
     if (!searchTerm) return;
@@ -74,6 +82,19 @@ export default function BlockchainExplorer() {
     const result = await verifyBlock(blockIndex);
     setVerificationResult(result);
     setIsVerifying(false);
+  };
+
+  const handleVerifyTransaction = async (
+    blockIndex: number,
+    txIndex: number
+  ) => {
+    setVerifyingTx(txIndex);
+    const result = await verifyTransaction(blockIndex, txIndex);
+    setTxVerificationResults((prev) => ({
+      ...prev,
+      [txIndex]: result,
+    }));
+    setVerifyingTx(null);
   };
 
   const formatTimestamp = (timestamp: number) => {
@@ -144,9 +165,7 @@ export default function BlockchainExplorer() {
                 <Accordion type="single" collapsible className="w-full">
                   {Object.entries(verificationResult.peer_verification).map(
                     ([peer, result]: [string, any], index) => {
-                      const isValid = Object.values(result).every(
-                        (val) => val === true
-                      );
+                      const isValid = isValidVerification(result);
 
                       return (
                         <AccordionItem key={index} value={`peer-${index}`}>
@@ -365,32 +384,80 @@ export default function BlockchainExplorer() {
                   {selectedBlock.transactions.length > 0 ? (
                     <div className="space-y-2">
                       {selectedBlock.transactions.map(
-                        (tx: any, index: number) => (
-                          <div key={index} className="rounded-md border p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              <div>
-                                <span className="font-medium">From:</span>
-                                <div className="mt-1">
-                                  <code className="rounded bg-muted px-2 py-1 text-xs">
-                                    {tx.sender}
-                                  </code>
+                        (tx: any, index: number) => {
+                          const txVerification = txVerificationResults[index];
+                          const isVerified =
+                            txVerification &&
+                            txVerification.verification?.is_valid;
+
+                          return (
+                            <div key={index} className="rounded-md border p-4">
+                              <div className="flex justify-between items-center mb-2">
+                                <div className="font-medium">
+                                  Transaction #{index}
+                                </div>
+                                {txVerification && (
+                                  <Badge
+                                    variant={
+                                      isVerified ? "default" : "destructive"
+                                    }
+                                  >
+                                    {isVerified ? (
+                                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                                    ) : (
+                                      <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                                    )}
+                                    {isVerified ? "Valid" : "Invalid"}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div>
+                                  <span className="font-medium">From:</span>
+                                  <div className="mt-1">
+                                    <code className="rounded bg-muted px-2 py-1 text-xs">
+                                      {tx.sender}
+                                    </code>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="font-medium">To:</span>
+                                  <div className="mt-1">
+                                    <code className="rounded bg-muted px-2 py-1 text-xs">
+                                      {tx.recipient}
+                                    </code>
+                                  </div>
                                 </div>
                               </div>
-                              <div>
-                                <span className="font-medium">To:</span>
-                                <div className="mt-1">
-                                  <code className="rounded bg-muted px-2 py-1 text-xs">
-                                    {tx.recipient}
-                                  </code>
+                              <div className="mt-2 flex justify-between items-center">
+                                <div>
+                                  <span className="font-medium">Amount:</span>{" "}
+                                  {tx.amount}
                                 </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleVerifyTransaction(
+                                      selectedBlock.index,
+                                      index
+                                    )
+                                  }
+                                  disabled={verifyingTx === index}
+                                >
+                                  {verifyingTx === index ? (
+                                    "Verifying..."
+                                  ) : (
+                                    <>
+                                      <Shield className="h-4 w-4 mr-1" />
+                                      Verify Transaction
+                                    </>
+                                  )}
+                                </Button>
                               </div>
                             </div>
-                            <div className="mt-2">
-                              <span className="font-medium">Amount:</span>{" "}
-                              {tx.amount}
-                            </div>
-                          </div>
-                        )
+                          );
+                        }
                       )}
                     </div>
                   ) : (

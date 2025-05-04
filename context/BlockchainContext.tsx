@@ -69,6 +69,8 @@ interface BlockchainContextType {
   ) => Promise<boolean>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   verifyBlock: (blockIndex?: number) => Promise<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  verifyTransaction: (blockIndex: number, txIndex: number) => Promise<any>;
 }
 
 const BlockchainContext = createContext<BlockchainContextType | undefined>(
@@ -271,6 +273,17 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const verifyTransaction = async (blockIndex: number, txIndex: number) => {
+    try {
+      const url = `/verify_transaction?block_index=${blockIndex}&tx_index=${txIndex}`;
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error("Error verifying transaction:", error);
+      return null;
+    }
+  };
+
   return (
     <BlockchainContext.Provider
       value={{
@@ -292,6 +305,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         verifyBlock,
         fetchMiningParams,
         updateMiningParams,
+        verifyTransaction,
       }}
     >
       {children}

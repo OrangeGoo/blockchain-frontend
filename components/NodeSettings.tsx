@@ -15,10 +15,15 @@ import { Label } from "@/components/ui/label";
 import { useBlockchain } from "@/context/BlockchainContext";
 import { Server, Sliders } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { api } from "@/lib/api";
 
 export default function NodeSettings() {
-  const { miningParams, peers, currentPort, setCurrentPort } = useBlockchain();
+  const {
+    miningParams,
+    peers,
+    currentPort,
+    setCurrentPort,
+    updateMiningParams,
+  } = useBlockchain();
 
   const [newNodeUrl, setNewNodeUrl] = useState("");
   const [updatedMiningParams, setUpdatedMiningParams] = useState({
@@ -80,9 +85,9 @@ export default function NodeSettings() {
     setIsUpdating(true);
 
     try {
-      const response = await api.post("/mining_params", updatedMiningParams);
+      const response = await updateMiningParams(updatedMiningParams);
 
-      if (response.data.status === "success") {
+      if (response) {
         toast.success("Mining parameters updated successfully");
       } else {
         toast.error("Failed to update mining parameters");

@@ -59,6 +59,7 @@ interface BlockchainContextType {
   refreshChain: () => Promise<void>;
   refreshVotes: () => Promise<void>;
   fetchMiningParams: () => Promise<void>;
+  updateMiningParams: (params: MiningParams) => Promise<MiningParams | null>;
   submitVote: (voter: string, candidate: string) => Promise<boolean>;
   checkVoteStatus: (voter: string) => Promise<VoteStatus | null>;
   mine: () => Promise<Block | null>;
@@ -145,6 +146,21 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Error fetching mining parameters:", error);
+    }
+  };
+
+  const updateMiningParams = async (params: MiningParams) => {
+    try {
+      const response = await api.post(`${baseURL}/mining_params`, params);
+      if (response.data.status === "success") {
+        setMiningParams(response.data.current_params);
+        return response.data.current_params;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Error updating mining parameters:", error);
+      return null;
     }
   };
 
@@ -261,6 +277,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         addTransaction,
         verifyBlock,
         fetchMiningParams,
+        updateMiningParams,
       }}
     >
       {children}

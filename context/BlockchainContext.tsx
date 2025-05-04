@@ -275,7 +275,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
 
   const verifyTransaction = async (blockIndex: number, txIndex: number) => {
     try {
-      const url = `/verify_transaction?block_index=${blockIndex}&tx_index=${txIndex}`;
+      const url = `${baseURL}/verify_transaction?block_index=${blockIndex}&tx_index=${txIndex}`;
       const response = await api.get(url);
       return response.data;
     } catch (error) {

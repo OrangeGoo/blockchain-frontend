@@ -83,9 +83,20 @@ export default function BlockchainExplorer() {
   const renderVerificationStatus = () => {
     if (!verificationResult) return null;
 
+    const isValidVerification = (
+      verification: { [s: string]: unknown } | ArrayLike<unknown>
+    ) => {
+      // Check if all fields ending with _ok or _match are true
+      return Object.entries(verification).every(([key, value]) => {
+        if (key.endsWith("_ok") || key.endsWith("_match")) {
+          return value === true;
+        }
+        return true; // Skip fields that don't end with _ok or _match
+      });
+    };
+
     const localVerification = verificationResult.local_verification;
-    const isLocalValid =
-      localVerification.hash_ok && localVerification.merkle_ok;
+    const isLocalValid = isValidVerification(localVerification);
 
     return (
       <Card className="mt-4">

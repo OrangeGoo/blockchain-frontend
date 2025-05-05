@@ -97,7 +97,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await api.get(`/chain`);
+        await api.get(`${baseURL}/chain`);
         setNodeStatus(true);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {

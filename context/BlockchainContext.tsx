@@ -89,10 +89,10 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
   const [nodeStatus, setNodeStatus] = useState(false);
   const [peers, setPeers] = useState<string[]>([]);
   // const [currentPort, setCurrentPort] = useState(5001);
-  const [nodeUrl, setNodeUrl] = useState("http://localhost:5001");
+  const [nodeUrl, setNodeUrl] = useState("35.232.36.80:5001");
 
   const baseURL = nodeUrl; // Base URL for the node
-  const trackerURL = `http://localhost:6000`; // Tracker URL
+  const trackerURL = `34.56.151.86:6000`; // Tracker URL
 
   useEffect(() => {
     const checkConnection = async () => {

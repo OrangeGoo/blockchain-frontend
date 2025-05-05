@@ -166,7 +166,90 @@ export default function NodeSettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             {miningParams ? (
-              <>{/* Mining parameter inputs (unchanged) */}</>
+              <>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <Input
+                      id="difficulty"
+                      type="number"
+                      min="1"
+                      value={updatedMiningParams.difficulty}
+                      onChange={(e) =>
+                        setUpdatedMiningParams({
+                          ...updatedMiningParams,
+                          difficulty: Number.parseInt(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Higher difficulty means more computational work required
+                      to mine a block
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="target-time">
+                      Target Block Time (seconds)
+                    </Label>
+                    <Input
+                      id="target-time"
+                      type="number"
+                      min="1"
+                      value={updatedMiningParams.target_block_time}
+                      onChange={(e) =>
+                        setUpdatedMiningParams({
+                          ...updatedMiningParams,
+                          target_block_time: Number.parseInt(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Target time between blocks in seconds
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adjustment">Adjustment Interval</Label>
+                    <Input
+                      id="adjustment"
+                      type="number"
+                      min="1"
+                      value={updatedMiningParams.adjustment_interval}
+                      onChange={(e) =>
+                        setUpdatedMiningParams({
+                          ...updatedMiningParams,
+                          adjustment_interval: Number.parseInt(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Number of blocks between difficulty adjustments
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tolerance">Time Tolerance</Label>
+                    <Input
+                      id="tolerance"
+                      type="number"
+                      min="0.01"
+                      max="1"
+                      step="0.01"
+                      value={updatedMiningParams.time_tolerance}
+                      onChange={(e) =>
+                        setUpdatedMiningParams({
+                          ...updatedMiningParams,
+                          time_tolerance: Number.parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tolerance factor for difficulty adjustment (0.1 = 10%)
+                    </p>
+                  </div>
+                </>
+              </>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
                 Loading mining parameters...

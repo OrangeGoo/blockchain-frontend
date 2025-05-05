@@ -55,8 +55,8 @@ interface BlockchainContextType {
   miningParams: MiningParams | null;
   nodeStatus: boolean;
   peers: string[];
-  currentPort: number;
-  setCurrentPort: (port: number) => void;
+  nodeUrl: string;
+  setNodeUrl: (nodeUrl: string) => void;
   refreshChain: () => Promise<void>;
   refreshVotes: () => Promise<void>;
   fetchMiningParams: () => Promise<void>;
@@ -88,15 +88,16 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
   const [miningParams, setMiningParams] = useState<MiningParams | null>(null);
   const [nodeStatus, setNodeStatus] = useState(false);
   const [peers, setPeers] = useState<string[]>([]);
-  const [currentPort, setCurrentPort] = useState(5001);
+  // const [currentPort, setCurrentPort] = useState(5001);
+  const [nodeUrl, setNodeUrl] = useState("http://localhost:5001");
 
-  const baseURL = `/api${currentPort}`;
-  const trackerURL = `/tracker`;
+  const baseURL = nodeUrl; // Base URL for the node
+  const trackerURL = `http://localhost:6000`; // Tracker URL
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        await api.get(`${baseURL}/chain`);
+        await api.get(`/chain`);
         setNodeStatus(true);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
@@ -107,7 +108,7 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
     checkConnection();
     const interval = setInterval(checkConnection, 30000);
     return () => clearInterval(interval);
-  }, [baseURL]);
+  }, [baseURL, nodeUrl]);
 
   useEffect(() => {
     if (nodeStatus) {
@@ -294,8 +295,8 @@ export function BlockchainProvider({ children }: { children: ReactNode }) {
         miningParams,
         nodeStatus,
         peers,
-        currentPort,
-        setCurrentPort,
+        nodeUrl,
+        setNodeUrl,
         refreshChain,
         refreshVotes,
         submitVote,

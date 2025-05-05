@@ -23,7 +23,7 @@ export default function Dashboard() {
     refreshChain,
     fetchMiningParams,
     mine,
-    currentPort,
+    nodeUrl,
   } = useBlockchain();
 
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
@@ -36,7 +36,7 @@ export default function Dashboard() {
     }, 10000); // Refresh every 10 seconds
 
     return () => clearInterval(interval);
-  }, [currentPort]);
+  }, [nodeUrl]);
 
   const refreshData = async () => {
     setIsRefreshing(true);
